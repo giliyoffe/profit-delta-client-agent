@@ -1,14 +1,19 @@
 :root {
-  --ink: #18211f;
-  --muted: #66716d;
-  --line: #d9e0dc;
-  --paper: #f7f8f5;
+  --ink: #241034;
+  --muted: #7a6f86;
+  --line: #e4ddeb;
+  --paper: #faf9fc;
   --panel: #ffffff;
-  --green: #244c3d;
-  --green-2: #4d7c63;
-  --coral: #be654f;
-  --blue: #466b8d;
-  --shadow: 0 18px 60px rgba(29, 46, 41, 0.11);
+  --purple: #4b1175;
+  --purple-2: #7420ad;
+  --magenta: #c01577;
+  --rose: #e03b91;
+  --silver: #f1eef5;
+  --coral: #bf2c76;
+  --blue: #5c4a82;
+  --primary-gradient: linear-gradient(135deg, #2a063f 0%, #5d1590 46%, #c91578 100%);
+  --soft-gradient: linear-gradient(135deg, rgba(75, 17, 117, 0.1), rgba(224, 59, 145, 0.12));
+  --shadow: 0 18px 60px rgba(52, 21, 77, 0.12);
 }
 
 * {
@@ -17,7 +22,9 @@
 
 body {
   margin: 0;
-  background: var(--paper);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(192, 21, 119, 0.09), transparent 32%),
+    linear-gradient(180deg, #ffffff 0%, var(--paper) 100%);
   color: var(--ink);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
@@ -33,14 +40,15 @@ button {
   min-height: 42px;
   border: 0;
   border-radius: 6px;
-  background: var(--green);
+  background: var(--primary-gradient);
   color: white;
   padding: 0 16px;
   cursor: pointer;
+  box-shadow: 0 10px 24px rgba(89, 20, 137, 0.18);
 }
 
 button:hover {
-  background: #1c3d31;
+  filter: brightness(0.95);
 }
 
 button.danger {
@@ -52,12 +60,13 @@ button.danger:hover {
 }
 
 .secondary {
-  background: #e8eee9;
-  color: var(--green);
+  background: #f0e8f6;
+  color: var(--purple);
+  box-shadow: none;
 }
 
 .secondary:hover {
-  background: #dce7de;
+  background: #e8dcf2;
 }
 
 .ghost {
@@ -67,7 +76,7 @@ button.danger:hover {
 }
 
 .ghost:hover {
-  background: #eef2ee;
+  background: #f4eff8;
 }
 
 .app-shell {
@@ -77,7 +86,9 @@ button.danger:hover {
 }
 
 .sidebar {
-  background: #fff;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(250, 247, 253, 0.96)),
+    var(--panel);
   border-right: 1px solid var(--line);
   padding: 24px;
   display: flex;
@@ -96,6 +107,7 @@ button.danger:hover {
   width: 52px;
   height: 52px;
   object-fit: contain;
+  filter: drop-shadow(0 12px 18px rgba(76, 17, 117, 0.16));
 }
 
 .eyebrow,
@@ -137,8 +149,9 @@ h2 {
 
 .nav-button:hover,
 .nav-button.active {
-  background: #eef4ef;
-  border-color: #d7e4da;
+  background: #f3eaf8;
+  border-color: #e2d0ee;
+  color: var(--purple);
 }
 
 .gate-panel {
@@ -146,15 +159,18 @@ h2 {
   padding: 16px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fbfcfa;
+  background: #fbf9fd;
 }
 
 .install-panel {
   margin-top: auto;
   padding: 16px;
-  border: 1px solid #cfded3;
+  border: 1px solid #dec8ec;
   border-radius: 8px;
-  background: #f2f7f2;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.9)),
+    var(--soft-gradient);
+  box-shadow: 0 14px 34px rgba(95, 25, 142, 0.1);
 }
 
 .install-panel button {
@@ -229,7 +245,7 @@ h2 {
 }
 
 .status-pill.listening {
-  background: rgba(190, 101, 79, 0.14);
+  background: rgba(191, 44, 118, 0.14);
   color: var(--coral);
 }
 
@@ -244,7 +260,7 @@ h2 {
   min-height: 170px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fbfcfa;
+  background: #fbf9fd;
   padding: 14px;
 }
 
@@ -327,8 +343,8 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: var(--green-2);
-  box-shadow: 0 0 0 3px rgba(77, 124, 99, 0.16);
+  border-color: var(--purple-2);
+  box-shadow: 0 0 0 3px rgba(116, 32, 173, 0.14);
 }
 
 .output-panel pre {
@@ -337,8 +353,8 @@ textarea:focus {
   padding: 16px;
   overflow: auto;
   border-radius: 6px;
-  background: #f4f6f3;
-  color: #26312d;
+  background: #f7f3fa;
+  color: #2b173c;
   white-space: pre-wrap;
   line-height: 1.55;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -351,14 +367,14 @@ textarea:focus {
   min-height: 28px;
   border-radius: 999px;
   padding: 0 10px;
-  background: rgba(70, 107, 141, 0.14);
+  background: rgba(92, 74, 130, 0.14);
   color: var(--blue);
   font-size: 12px;
   font-weight: 800;
 }
 
 .status-pill.caution {
-  background: rgba(190, 101, 79, 0.14);
+  background: rgba(191, 44, 118, 0.14);
   color: var(--coral);
 }
 
@@ -394,7 +410,7 @@ th {
   transform: translateY(20px);
   opacity: 0;
   pointer-events: none;
-  background: var(--ink);
+  background: #2a063f;
   color: white;
   border-radius: 6px;
   padding: 12px 14px;
