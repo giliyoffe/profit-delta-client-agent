@@ -90,10 +90,11 @@ button.danger:hover {
     linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(250, 247, 253, 0.96)),
     var(--panel);
   border-right: 1px solid var(--line);
-  padding: 24px;
+  min-height: 100vh;
+  padding: 22px;
   display: flex;
   flex-direction: column;
-  gap: 26px;
+  gap: clamp(14px, 2vh, 22px);
 }
 
 .brand {
@@ -155,7 +156,6 @@ h2 {
 }
 
 .gate-panel {
-  margin-top: auto;
   padding: 16px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -163,7 +163,6 @@ h2 {
 }
 
 .install-panel {
-  margin-top: auto;
   padding: 16px;
   border: 1px solid #dec8ec;
   border-radius: 8px;
@@ -175,7 +174,7 @@ h2 {
 
 .install-panel button {
   width: 100%;
-  min-height: 52px;
+  min-height: 50px;
   font-size: 16px;
   font-weight: 800;
 }
@@ -430,6 +429,7 @@ th {
 
   .sidebar {
     position: static;
+    min-height: auto;
     border-right: 0;
     border-bottom: 1px solid var(--line);
   }
@@ -460,6 +460,50 @@ th {
 
   .output-panel pre {
     min-height: 360px;
+  }
+}
+
+@media (max-height: 820px) and (min-width: 901px) {
+  .sidebar {
+    padding: 18px;
+    gap: 12px;
+  }
+
+  .brand {
+    grid-template-columns: 44px 1fr;
+  }
+
+  .brand img {
+    width: 44px;
+    height: 44px;
+  }
+
+  h1 {
+    font-size: 20px;
+  }
+
+  .nav {
+    gap: 6px;
+  }
+
+  .nav-button {
+    min-height: 38px;
+  }
+
+  .install-panel,
+  .gate-panel {
+    padding: 12px;
+  }
+
+  .install-panel button {
+    min-height: 44px;
+    font-size: 15px;
+  }
+
+  .install-panel p:not(.panel-label),
+  .gate-panel p:not(.panel-label) {
+    font-size: 12px;
+    line-height: 1.35;
   }
 }
 
