@@ -71,7 +71,7 @@
           <div class="voice-controls">
             <button id="voiceButton" type="button" aria-pressed="false">Start Listening</button>
             <button id="speakLastResponse" class="secondary" type="button">Speak Reply</button>
-            <button id="clearAgentMemory" class="ghost" type="button">Clear Memory</button>
+            <button id="clearAgentMemory" class="ghost" type="button">Forget Saved Memory</button>
           </div>
           <p class="mic-note">Mic is off unless the status says Listening. Press the button again to stop.</p>
           <label>
@@ -82,9 +82,9 @@
             <button id="sendTypedMessage" type="button">Send to Agent</button>
           </div>
           <div class="grid three">
-            <article class="mini-panel">
-              <p class="panel-label">Agent Response</p>
-              <pre id="agentResponse"></pre>
+            <article class="mini-panel chat-panel">
+              <p class="panel-label">Conversation</p>
+              <div id="agentResponse" class="chat-log"></div>
             </article>
             <article class="mini-panel">
               <p class="panel-label">Memory / Context</p>

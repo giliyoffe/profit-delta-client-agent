@@ -18,6 +18,9 @@ function extractLookupName(message) {
 function describeClient(client) {
   return [
     `${client.companyName}:`,
+    client.companyDescription ? `What they do: ${client.companyDescription}` : "",
+    client.location ? `Location: ${client.location}` : "",
+    client.companySize ? `Company size: ${client.companySize}` : "",
     client.businessProblem ? `Problem: ${client.businessProblem}` : "",
     client.manualProcess ? `Current process: ${client.manualProcess}` : "",
     client.goal ? `Goal: ${client.goal}` : "",

@@ -1,4 +1,4 @@
-const CACHE_NAME = "profit-delta-client-agent-v5";
+const CACHE_NAME = "profit-delta-client-agent-v6";
 const APP_SHELL = [
   "./",
   "./index.html",

@@ -272,6 +272,42 @@ h2 {
   line-height: 1.5;
 }
 
+.chat-log {
+  max-height: 290px;
+  overflow-y: auto;
+  display: grid;
+  gap: 10px;
+  color: #2b173c;
+  font-size: 13px;
+}
+
+.chat-message {
+  padding: 10px 11px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.chat-message.user {
+  background: #f4eaf9;
+  border-color: #dfc8ee;
+}
+
+.chat-message span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.chat-message p {
+  margin: 0;
+  color: var(--ink);
+  line-height: 1.45;
+}
+
 .view {
   display: none;
 }

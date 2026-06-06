@@ -63,7 +63,6 @@ The agent will keep unknowns as missing information instead of inventing details
 outputs.intake.textContent = starterSummary;
 outputs.offer.textContent = "Draft offer will appear here.";
 outputs.email.textContent = "Draft email will appear here.";
-agentUI.response.textContent = "Say something like: I spoke with a client called Wisdom...";
 agentUI.toolLog.textContent = "No tools called yet.";
 
 function getState() {
@@ -163,12 +162,20 @@ function setAgentStatus(status) {
   agentUI.status.classList.toggle("listening", status === "Listening");
 }
 
+function renderChatMessage(role, message) {
+  const item = document.createElement("div");
+  item.className = `chat-message ${role}`;
+  item.innerHTML = `<span>${role === "user" ? "You" : "Agent"}</span><p>${escapeHtml(message).replaceAll("\n", "<br>")}</p>`;
+  agentUI.response.appendChild(item);
+  agentUI.response.scrollTop = agentUI.response.scrollHeight;
+}
+
 function renderMemoryContext(context = getCurrentContext()) {
   const clients = context.clients.length
     ? context.clients
         .map((client) => {
           const tools = client.tools?.length ? `Tools: ${client.tools.join(", ")}` : "Tools: unknown";
-          return `${client.companyName}\nGoal: ${client.goal || "unknown"}\n${tools}`;
+          return `${client.companyName}\n${client.companySize ? `Size: ${client.companySize}\n` : ""}${client.location ? `Location: ${client.location}\n` : ""}Goal: ${client.goal || "unknown"}\n${tools}`;
         })
         .join("\n\n")
     : "No saved clients yet.";
@@ -392,6 +399,9 @@ function applyAgentProfile(profile) {
   }
   if (profile.manualProcess || profile.businessProblem || profile.goal) {
     fields.callNotes.value = [
+      profile.companyDescription ? `Company description: ${profile.companyDescription}` : "",
+      profile.location ? `Location: ${profile.location}` : "",
+      profile.companySize ? `Company size: ${profile.companySize}` : "",
       profile.businessProblem ? `Problem: ${profile.businessProblem}` : "",
       profile.manualProcess ? `Manual process: ${profile.manualProcess}` : "",
       profile.goal ? `Goal: ${profile.goal}` : "",
@@ -413,12 +423,14 @@ async function handleAgentMessage(message) {
   }
 
   setAgentStatus("Thinking");
+  renderChatMessage("user", message.trim());
   agentUI.toolLog.textContent = "Routing...";
   const result = await routeMessage(message.trim());
-  agentUI.response.textContent = result.reply;
+  renderChatMessage("agent", result.reply);
   agentUI.toolLog.textContent = result.toolLog.join("\n");
   renderMemoryContext(result.context);
   applyAgentProfile(result.profile);
+  agentUI.transcript.value = "";
   saveState();
   setAgentStatus("Speaking");
   speakText(result.reply);
@@ -552,3 +564,4 @@ Object.values(fields).forEach((field) => {
 loadState();
 setupVoice();
 renderMemoryContext();
+renderChatMessage("agent", "Say something like: I spoke with a client called Wisdom...");
