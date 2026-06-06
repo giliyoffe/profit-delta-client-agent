@@ -149,6 +149,32 @@ h2 {
   background: #fbfcfa;
 }
 
+.install-panel {
+  margin-top: auto;
+  padding: 16px;
+  border: 1px solid #cfded3;
+  border-radius: 8px;
+  background: #f2f7f2;
+}
+
+.install-panel button {
+  width: 100%;
+  min-height: 52px;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.install-panel p:not(.panel-label) {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.install-panel + .gate-panel {
+  margin-top: 0;
+}
+
 .gate-panel p:not(.panel-label) {
   margin: 0 0 14px;
   color: var(--muted);

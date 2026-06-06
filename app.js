@@ -44,9 +44,15 @@ const agentUI = {
   clearMemory: document.querySelector("#clearAgentMemory"),
 };
 
+const installUI = {
+  button: document.querySelector("#installApp"),
+  hint: document.querySelector("#installHint"),
+};
+
 const storageKey = "profit-delta-client-agent-v1";
 let tracker = [];
 let isListening = false;
+let pendingInstallPrompt = null;
 
 const starterSummary = `Client Snapshot
 
@@ -114,6 +120,42 @@ function showToast(message) {
   toast.classList.add("show");
   window.clearTimeout(showToast.timer);
   showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 1800);
+}
+
+function setInstallHint(message) {
+  installUI.hint.textContent = message;
+}
+
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+  pendingInstallPrompt = event;
+  installUI.button.disabled = false;
+  setInstallHint("Ready to install as a Mac app.");
+});
+
+window.addEventListener("appinstalled", () => {
+  pendingInstallPrompt = null;
+  installUI.button.disabled = true;
+  installUI.button.textContent = "Installed";
+  setInstallHint("Installed. You can open it from your Mac apps.");
+});
+
+async function installApp() {
+  if (pendingInstallPrompt) {
+    pendingInstallPrompt.prompt();
+    const result = await pendingInstallPrompt.userChoice;
+    pendingInstallPrompt = null;
+    if (result.outcome === "accepted") {
+      installUI.button.textContent = "Installed";
+      setInstallHint("Installed. You can open it from your Mac apps.");
+      return;
+    }
+    setInstallHint("Install was cancelled. Click again if you want to retry.");
+    return;
+  }
+
+  setInstallHint("Use Chrome/Edge install icon, or Safari: File > Add to Dock.");
+  showToast("Use browser install menu");
 }
 
 function setAgentStatus(status) {
@@ -501,6 +543,7 @@ agentUI.clearMemory.addEventListener("click", () => {
   renderMemoryContext();
   showToast("Memory cleared");
 });
+installUI.button.addEventListener("click", installApp);
 
 Object.values(fields).forEach((field) => {
   field.addEventListener("change", saveState);
