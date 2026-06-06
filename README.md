@@ -39,3 +39,18 @@ The agent must ask for approval before:
 - `client-tracker.csv`: simple pipeline tracker.
 - `handoff-checklist.md`: what to verify before sending anything.
 
+## Local UI
+
+Open `index.html` in a browser, or run a local server from this folder:
+
+```bash
+python3 -m http.server 4173
+```
+
+Then open:
+
+```text
+http://localhost:4173
+```
+
+The UI saves drafts locally in the browser. It does not send emails, call paid APIs, or move client data into external tools.

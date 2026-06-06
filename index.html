@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Profit Delta Client Agent</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <img src="assets/profitdelta-symbol.png" alt="Profit Delta" />
+          <div>
+            <p class="eyebrow">Profit Delta</p>
+            <h1>Client Agent</h1>
+          </div>
+        </div>
+
+        <nav class="nav" aria-label="Agent views">
+          <button class="nav-button active" data-view="intake">Intake</button>
+          <button class="nav-button" data-view="offer">Offer</button>
+          <button class="nav-button" data-view="email">Email</button>
+          <button class="nav-button" data-view="tracker">Tracker</button>
+        </nav>
+
+        <div class="gate-panel">
+          <p class="panel-label">Approval Gate</p>
+          <p>No email, price, promise, or external action is approved until you mark it approved.</p>
+          <select id="approvalStatus" aria-label="Approval status">
+            <option value="hold">Hold</option>
+            <option value="edit">Needs edits</option>
+            <option value="approved">Approved</option>
+          </select>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <section class="topbar">
+          <div>
+            <p class="eyebrow">Internal workspace</p>
+            <h2 id="viewTitle">Intake</h2>
+          </div>
+          <div class="top-actions">
+            <button id="saveClient" class="secondary">Save</button>
+            <button id="resetWorkspace" class="ghost">Reset</button>
+          </div>
+        </section>
+
+        <section class="view active" id="intakeView" aria-label="Intake">
+          <div class="grid two">
+            <form class="panel form-grid" id="clientForm">
+              <label>
+                Client name
+                <input id="clientName" autocomplete="off" />
+              </label>
+              <label>
+                Company
+                <input id="company" autocomplete="off" />
+              </label>
+              <label>
+                Email
+                <input id="email" type="email" autocomplete="off" />
+              </label>
+              <label>
+                Status
+                <select id="status">
+                  <option>New</option>
+                  <option>Intake complete</option>
+                  <option>Offer drafted</option>
+                  <option>Waiting for approval</option>
+                  <option>Sent</option>
+                  <option>Won</option>
+                  <option>Lost</option>
+                </select>
+              </label>
+              <label class="wide">
+                Call notes or transcript
+                <textarea id="callNotes" rows="14" placeholder="Paste intake notes here..."></textarea>
+              </label>
+              <div class="wide action-row">
+                <button type="button" id="runIntake">Run Intake</button>
+                <button type="button" id="copySummary" class="secondary">Copy Summary</button>
+              </div>
+            </form>
+
+            <article class="panel output-panel">
+              <div class="panel-head">
+                <p class="panel-label">Client Snapshot</p>
+                <span id="snapshotState" class="status-pill">Draft</span>
+              </div>
+              <pre id="intakeOutput"></pre>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" id="offerView" aria-label="Offer">
+          <div class="grid two">
+            <div class="panel form-grid">
+              <label class="wide">
+                Proposed solution
+                <textarea id="solution" rows="5" placeholder="Example: AI intake and proposal workflow for new leads"></textarea>
+              </label>
+              <label>
+                Timeline
+                <input id="timeline" placeholder="[TIMELINE TO APPROVE]" />
+              </label>
+              <label>
+                Price
+                <input id="price" placeholder="[PRICE TO APPROVE]" />
+              </label>
+              <label class="wide">
+                Deliverables
+                <textarea id="deliverables" rows="6" placeholder="One deliverable per line"></textarea>
+              </label>
+              <div class="wide action-row">
+                <button type="button" id="draftOffer">Draft Offer</button>
+                <button type="button" id="copyOffer" class="secondary">Copy Offer</button>
+              </div>
+            </div>
+
+            <article class="panel output-panel">
+              <div class="panel-head">
+                <p class="panel-label">Offer Draft</p>
+                <span class="status-pill caution">Needs approval</span>
+              </div>
+              <pre id="offerOutput"></pre>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" id="emailView" aria-label="Email">
+          <div class="grid two">
+            <div class="panel form-grid">
+              <label>
+                Email type
+                <select id="emailType">
+                  <option value="post-intake">Post-intake follow-up</option>
+                  <option value="offer">Send offer</option>
+                  <option value="follow-up">No-reply follow-up</option>
+                </select>
+              </label>
+              <label>
+                Next step
+                <input id="nextStep" placeholder="Review proposal and confirm scope" />
+              </label>
+              <label class="wide">
+                Extra notes
+                <textarea id="emailNotes" rows="7"></textarea>
+              </label>
+              <div class="wide action-row">
+                <button type="button" id="draftEmail">Draft Email</button>
+                <button type="button" id="copyEmail" class="secondary">Copy Email</button>
+              </div>
+            </div>
+
+            <article class="panel output-panel">
+              <div class="panel-head">
+                <p class="panel-label">Email Draft</p>
+                <span class="status-pill caution">Not sent</span>
+              </div>
+              <pre id="emailOutput"></pre>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" id="trackerView" aria-label="Tracker">
+          <div class="panel">
+            <div class="panel-head">
+              <p class="panel-label">Client Tracker</p>
+              <button id="addToTracker" class="secondary">Add Current Client</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Client</th>
+                    <th>Company</th>
+                    <th>Status</th>
+                    <th>Last contact</th>
+                    <th>Next action</th>
+                    <th>Approval</th>
+                  </tr>
+                </thead>
+                <tbody id="trackerRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
