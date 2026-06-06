@@ -47,6 +47,42 @@
           </div>
         </section>
 
+        <section class="panel voice-console" aria-label="Voice agent">
+          <div class="voice-head">
+            <div>
+              <p class="panel-label">Voice Agent</p>
+              <h3>Talk to the client agent</h3>
+            </div>
+            <span id="agentStatus" class="status-pill">Idle</span>
+          </div>
+          <div class="voice-controls">
+            <button id="voiceButton" type="button">Start Listening</button>
+            <button id="speakLastResponse" class="secondary" type="button">Speak Reply</button>
+            <button id="clearAgentMemory" class="ghost" type="button">Clear Memory</button>
+          </div>
+          <label>
+            Transcript
+            <textarea id="voiceTranscript" rows="3" placeholder="Use the mic, or type a message here as fallback."></textarea>
+          </label>
+          <div class="voice-controls">
+            <button id="sendTypedMessage" type="button">Send to Agent</button>
+          </div>
+          <div class="grid three">
+            <article class="mini-panel">
+              <p class="panel-label">Agent Response</p>
+              <pre id="agentResponse"></pre>
+            </article>
+            <article class="mini-panel">
+              <p class="panel-label">Memory / Context</p>
+              <pre id="memoryContext"></pre>
+            </article>
+            <article class="mini-panel">
+              <p class="panel-label">Tool Log</p>
+              <pre id="toolLog"></pre>
+            </article>
+          </div>
+        </section>
+
         <section class="view active" id="intakeView" aria-label="Intake">
           <div class="grid two">
             <form class="panel form-grid" id="clientForm">
@@ -191,6 +227,6 @@
     </div>
 
     <div id="toast" role="status" aria-live="polite"></div>
-    <script src="app.js"></script>
+    <script type="module" src="app.js"></script>
   </body>
 </html>

@@ -168,6 +168,50 @@ h2 {
   flex-wrap: wrap;
 }
 
+.voice-console {
+  margin-bottom: 18px;
+}
+
+.voice-head,
+.voice-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.voice-head h3 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: 0;
+}
+
+.grid.three {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.mini-panel {
+  min-height: 170px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfa;
+  padding: 14px;
+}
+
+.mini-panel pre {
+  margin: 0;
+  white-space: pre-wrap;
+  color: #26312d;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .view {
   display: none;
 }
@@ -339,6 +383,7 @@ th {
   }
 
   .grid.two,
+  .grid.three,
   .form-grid {
     grid-template-columns: 1fr;
   }

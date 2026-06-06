@@ -1,3 +1,7 @@
+import { routeMessage } from "./agents/orchestratorAgent.js";
+import { clearMemory, getCurrentContext } from "./services/memoryService.js";
+import { createSpeechRecognizer, speakText } from "./services/speechService.js";
+
 const fields = {
   clientName: document.querySelector("#clientName"),
   company: document.querySelector("#company"),
@@ -20,6 +24,18 @@ const outputs = {
   email: document.querySelector("#emailOutput"),
 };
 
+const agentUI = {
+  status: document.querySelector("#agentStatus"),
+  voiceButton: document.querySelector("#voiceButton"),
+  transcript: document.querySelector("#voiceTranscript"),
+  response: document.querySelector("#agentResponse"),
+  memory: document.querySelector("#memoryContext"),
+  toolLog: document.querySelector("#toolLog"),
+  sendTyped: document.querySelector("#sendTypedMessage"),
+  speakLast: document.querySelector("#speakLastResponse"),
+  clearMemory: document.querySelector("#clearAgentMemory"),
+};
+
 const storageKey = "profit-delta-client-agent-v1";
 let tracker = [];
 
@@ -32,6 +48,8 @@ The agent will keep unknowns as missing information instead of inventing details
 outputs.intake.textContent = starterSummary;
 outputs.offer.textContent = "Draft offer will appear here.";
 outputs.email.textContent = "Draft email will appear here.";
+agentUI.response.textContent = "Say something like: I spoke with a client called Wisdom...";
+agentUI.toolLog.textContent = "No tools called yet.";
 
 function getState() {
   return {
@@ -87,6 +105,27 @@ function showToast(message) {
   toast.classList.add("show");
   window.clearTimeout(showToast.timer);
   showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 1800);
+}
+
+function setAgentStatus(status) {
+  agentUI.status.textContent = status;
+}
+
+function renderMemoryContext(context = getCurrentContext()) {
+  const clients = context.clients.length
+    ? context.clients
+        .map((client) => {
+          const tools = client.tools?.length ? `Tools: ${client.tools.join(", ")}` : "Tools: unknown";
+          return `${client.companyName}\nGoal: ${client.goal || "unknown"}\n${tools}`;
+        })
+        .join("\n\n")
+    : "No saved clients yet.";
+
+  agentUI.memory.textContent = `Active client: ${context.activeClient || "none"}
+Current task: ${context.currentTask || "none"}
+
+Known clients:
+${clients}`;
 }
 
 function lines(value) {
@@ -293,6 +332,72 @@ function addToTracker() {
   saveState();
 }
 
+function applyAgentProfile(profile) {
+  if (!profile) return;
+  if (profile.companyName) {
+    fields.clientName.value = profile.companyName;
+    fields.company.value = profile.companyName;
+  }
+  if (profile.manualProcess || profile.businessProblem || profile.goal) {
+    fields.callNotes.value = [
+      profile.businessProblem ? `Problem: ${profile.businessProblem}` : "",
+      profile.manualProcess ? `Manual process: ${profile.manualProcess}` : "",
+      profile.goal ? `Goal: ${profile.goal}` : "",
+      profile.tools?.length ? `Tools: ${profile.tools.join(", ")}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
+  if (profile.goal) fields.solution.value = profile.goal;
+  if (profile.nextRecommendedAction) fields.nextStep.value = profile.nextRecommendedAction;
+  fields.status.value = "Intake complete";
+  runIntake();
+}
+
+async function handleAgentMessage(message) {
+  if (!message.trim()) {
+    showToast("Add a message first");
+    return;
+  }
+
+  setAgentStatus("Thinking");
+  agentUI.toolLog.textContent = "Routing...";
+  const result = await routeMessage(message.trim());
+  agentUI.response.textContent = result.reply;
+  agentUI.toolLog.textContent = result.toolLog.join("\n");
+  renderMemoryContext(result.context);
+  applyAgentProfile(result.profile);
+  saveState();
+  setAgentStatus("Speaking");
+  speakText(result.reply);
+  window.setTimeout(() => setAgentStatus("Idle"), 1200);
+}
+
+let recognizer = null;
+
+function setupVoice() {
+  recognizer = createSpeechRecognizer({
+    onStart: () => setAgentStatus("Listening"),
+    onResult: (transcript) => {
+      agentUI.transcript.value = transcript;
+      handleAgentMessage(transcript);
+    },
+    onEnd: () => {
+      if (agentUI.status.textContent === "Listening") setAgentStatus("Idle");
+    },
+    onError: (error) => {
+      setAgentStatus("Voice unavailable");
+      showToast(String(error));
+    },
+  });
+
+  if (!recognizer) {
+    agentUI.voiceButton.disabled = true;
+    agentUI.voiceButton.textContent = "Mic Unsupported";
+    setAgentStatus("Type fallback");
+  }
+}
+
 function renderTracker() {
   const body = document.querySelector("#trackerRows");
   body.innerHTML = "";
@@ -347,9 +452,19 @@ document.querySelector("#resetWorkspace").addEventListener("click", () => {
   localStorage.removeItem(storageKey);
   window.location.reload();
 });
+agentUI.sendTyped.addEventListener("click", () => handleAgentMessage(agentUI.transcript.value));
+agentUI.voiceButton.addEventListener("click", () => recognizer?.start());
+agentUI.speakLast.addEventListener("click", () => speakText(agentUI.response.textContent));
+agentUI.clearMemory.addEventListener("click", () => {
+  clearMemory();
+  renderMemoryContext();
+  showToast("Memory cleared");
+});
 
 Object.values(fields).forEach((field) => {
   field.addEventListener("change", saveState);
 });
 
 loadState();
+setupVoice();
+renderMemoryContext();

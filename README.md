@@ -5,8 +5,11 @@ Use this folder as the operating home for client intake, offer drafting, follow-
 ## What This Agent Does
 
 - Turns intake call notes into a clean client profile.
+- Lets the user speak a one-turn message through the browser microphone.
+- Routes voice/text messages through a simple orchestrator agent.
 - Drafts a client-ready offer from the profile.
 - Drafts follow-up emails and next-step messages.
+- Saves useful client memory locally in the browser.
 - Maintains a simple client pipeline tracker.
 - Stops before sensitive actions, especially sending emails, changing prices, or committing client promises.
 
@@ -22,13 +25,36 @@ The agent must ask for approval before:
 
 ## Basic Workflow
 
-1. Paste call notes or transcript into this chat.
-2. Ask: "Run Profit Delta intake."
-3. Review the generated client profile.
-4. Ask: "Draft the offer."
-5. Approve, edit, or reject the offer.
-6. Ask: "Draft the follow-up email."
-7. Approve before sending it yourself or connecting an email tool later.
+1. Run the local UI.
+2. Press **Start Listening** or type a message in the transcript box.
+3. Say something like: "I spoke with a client called Wisdom. They want to automate their manual client intake process. They use emails and spreadsheets. The main pain is that information gets lost and follow-up is slow."
+4. Review the spoken/written agent response.
+5. Ask: "What do we know about Wisdom?"
+6. Use the existing intake, offer, email, and tracker screens for approval-gated follow-up.
+
+## Current Architecture
+
+```text
+.
+├── agents
+│   ├── orchestratorAgent.js
+│   └── clientIntakeAgent.js
+├── services
+│   ├── memoryService.js
+│   └── speechService.js
+├── tools
+│   └── clientTools.js
+├── app.js
+├── index.html
+└── styles.css
+```
+
+- `orchestratorAgent`: receives user messages and decides whether to answer directly, route to client intake, or search memory.
+- `clientIntakeAgent`: extracts simple structured client information from natural language.
+- `memoryService`: stores conversation memory, client profiles, summaries, and active context in browser localStorage.
+- `clientTools`: safe tool layer for client memory actions.
+- `speechService`: browser speech-to-text and text-to-speech helpers.
+- `app.js`: connects the existing UI to the agent modules.
 
 ## File Map
 
@@ -41,16 +67,47 @@ The agent must ask for approval before:
 
 ## Local UI
 
-Open `index.html` in a browser, or run a local server from this folder:
+Run a local server from this folder:
 
 ```bash
-python3 -m http.server 4173
+python3 -m http.server 4174
 ```
 
 Then open:
 
 ```text
-http://localhost:4173
+http://localhost:4174
 ```
 
-The UI saves drafts locally in the browser. It does not send emails, call paid APIs, or move client data into external tools.
+The UI saves drafts and memory locally in the browser. It does not send emails, call paid APIs, or move client data into external tools.
+
+## MVP Demo Script
+
+1. Click **Start Listening**.
+2. Say: "I spoke with a client called Wisdom. They want to automate their manual client intake process. They use emails and spreadsheets. The main pain is that information gets lost and follow-up is slow."
+3. The agent should respond out loud and save Wisdom in memory.
+4. Click **Start Listening** again.
+5. Say: "What do we know about Wisdom?"
+6. The agent should retrieve and summarize the saved client memory.
+
+## Implemented
+
+- Push-to-talk browser voice input where supported
+- Typed fallback when speech recognition is unavailable
+- Browser text-to-speech responses
+- Main orchestrator agent
+- Client-intake agent
+- Local memory service
+- Safe client tool layer
+- Memory/context panel
+- Tool log panel
+- Approval-gated offer and email drafts
+
+## Next Recommended Steps
+
+- Add optional OpenAI LLM support behind `OPENAI_API_KEY`
+- Add better extraction for more varied call transcripts
+- Add export/import for memory
+- Add draft email file creation after explicit confirmation
+- Add continuous conversation mode
+- Add wake-word support only after privacy review
