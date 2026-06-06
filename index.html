@@ -4,6 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Profit Delta Client Agent</title>
+    <meta name="theme-color" content="#244c3d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Client Agent" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="assets/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -56,10 +63,11 @@
             <span id="agentStatus" class="status-pill">Idle</span>
           </div>
           <div class="voice-controls">
-            <button id="voiceButton" type="button">Start Listening</button>
+            <button id="voiceButton" type="button" aria-pressed="false">Start Listening</button>
             <button id="speakLastResponse" class="secondary" type="button">Speak Reply</button>
             <button id="clearAgentMemory" class="ghost" type="button">Clear Memory</button>
           </div>
+          <p class="mic-note">Mic is off unless the status says Listening. Press the button again to stop.</p>
           <label>
             Transcript
             <textarea id="voiceTranscript" rows="3" placeholder="Use the mic, or type a message here as fallback."></textarea>

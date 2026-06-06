@@ -31,3 +31,7 @@ export function speakText(text) {
   return true;
 }
 
+export function stopSpeaking() {
+  if (!("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+}

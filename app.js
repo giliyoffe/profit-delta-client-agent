@@ -1,6 +1,14 @@
 import { routeMessage } from "./agents/orchestratorAgent.js";
 import { clearMemory, getCurrentContext } from "./services/memoryService.js";
-import { createSpeechRecognizer, speakText } from "./services/speechService.js";
+import { createSpeechRecognizer, speakText, stopSpeaking } from "./services/speechService.js";
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch(() => {
+      showToast("Offline mode unavailable");
+    });
+  });
+}
 
 const fields = {
   clientName: document.querySelector("#clientName"),
@@ -38,6 +46,7 @@ const agentUI = {
 
 const storageKey = "profit-delta-client-agent-v1";
 let tracker = [];
+let isListening = false;
 
 const starterSummary = `Client Snapshot
 
@@ -109,6 +118,7 @@ function showToast(message) {
 
 function setAgentStatus(status) {
   agentUI.status.textContent = status;
+  agentUI.status.classList.toggle("listening", status === "Listening");
 }
 
 function renderMemoryContext(context = getCurrentContext()) {
@@ -375,17 +385,30 @@ async function handleAgentMessage(message) {
 
 let recognizer = null;
 
+function setListeningState(nextState) {
+  isListening = nextState;
+  agentUI.voiceButton.textContent = nextState ? "Stop Listening" : "Start Listening";
+  agentUI.voiceButton.setAttribute("aria-pressed", String(nextState));
+  agentUI.voiceButton.classList.toggle("danger", nextState);
+}
+
 function setupVoice() {
   recognizer = createSpeechRecognizer({
-    onStart: () => setAgentStatus("Listening"),
+    onStart: () => {
+      setListeningState(true);
+      setAgentStatus("Listening");
+    },
     onResult: (transcript) => {
       agentUI.transcript.value = transcript;
+      setListeningState(false);
       handleAgentMessage(transcript);
     },
     onEnd: () => {
+      setListeningState(false);
       if (agentUI.status.textContent === "Listening") setAgentStatus("Idle");
     },
     onError: (error) => {
+      setListeningState(false);
       setAgentStatus("Voice unavailable");
       showToast(String(error));
     },
@@ -395,6 +418,24 @@ function setupVoice() {
     agentUI.voiceButton.disabled = true;
     agentUI.voiceButton.textContent = "Mic Unsupported";
     setAgentStatus("Type fallback");
+  }
+}
+
+function toggleListening() {
+  if (!recognizer) return;
+  if (isListening) {
+    recognizer.stop();
+    stopSpeaking();
+    setListeningState(false);
+    setAgentStatus("Idle");
+    return;
+  }
+  stopSpeaking();
+  try {
+    recognizer.start();
+  } catch {
+    setListeningState(false);
+    setAgentStatus("Idle");
   }
 }
 
@@ -453,7 +494,7 @@ document.querySelector("#resetWorkspace").addEventListener("click", () => {
   window.location.reload();
 });
 agentUI.sendTyped.addEventListener("click", () => handleAgentMessage(agentUI.transcript.value));
-agentUI.voiceButton.addEventListener("click", () => recognizer?.start());
+agentUI.voiceButton.addEventListener("click", toggleListening);
 agentUI.speakLast.addEventListener("click", () => speakText(agentUI.response.textContent));
 agentUI.clearMemory.addEventListener("click", () => {
   clearMemory();

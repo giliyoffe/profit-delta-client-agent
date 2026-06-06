@@ -43,6 +43,14 @@ button:hover {
   background: #1c3d31;
 }
 
+button.danger {
+  background: var(--coral);
+}
+
+button.danger:hover {
+  background: #a95240;
+}
+
 .secondary {
   background: #e8eee9;
   color: var(--green);
@@ -186,6 +194,17 @@ h2 {
   margin: 0;
   font-size: 20px;
   letter-spacing: 0;
+}
+
+.mic-note {
+  margin: -4px 0 14px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.status-pill.listening {
+  background: rgba(190, 101, 79, 0.14);
+  color: var(--coral);
 }
 
 .grid.three {

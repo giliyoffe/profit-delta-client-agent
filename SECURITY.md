@@ -21,5 +21,6 @@ The MVP does not send emails, submit tickets, delete files, or control external 
 
 ## Voice Recording
 
-Voice input only starts when the user presses **Start Listening**. There is no wake word or always-listening mode in this MVP.
+Voice input only starts when the user presses **Start Listening**. While active, the button changes to **Stop Listening** and the status says **Listening**. Press **Stop Listening**, close the tab/app, or revoke the browser microphone permission to stop it.
 
+There is no wake word or always-listening mode in this MVP.

@@ -81,6 +81,24 @@ http://localhost:4174
 
 The UI saves drafts and memory locally in the browser. It does not send emails, call paid APIs, or move client data into external tools.
 
+## Install As A Local App
+
+The UI is now a PWA. After opening `http://localhost:4174`, install it from the browser:
+
+- Chrome / Edge: click the install icon in the address bar, or use **Save and share > Install page as app**.
+- Safari: use **File > Add to Dock**.
+
+Keep the local server running when using the installed app:
+
+```bash
+cd "/Users/giliyoffe/Documents/AI Business automation costume agent/agents/profit-delta-client-agent"
+python3 -m http.server 4174
+```
+
+The app shell is cached for offline loading, but voice recognition may still depend on browser/OS support.
+
+Mic behavior: the microphone is off unless the status says **Listening**. Press **Stop Listening** or close the app window to stop browser speech recognition.
+
 ## MVP Demo Script
 
 1. Click **Start Listening**.
@@ -93,6 +111,7 @@ The UI saves drafts and memory locally in the browser. It does not send emails, 
 ## Implemented
 
 - Push-to-talk browser voice input where supported
+- Clear start/stop microphone toggle
 - Typed fallback when speech recognition is unavailable
 - Browser text-to-speech responses
 - Main orchestrator agent
