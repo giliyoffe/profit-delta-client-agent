@@ -56,6 +56,23 @@ The agent must ask for approval before:
 - `speechService`: browser speech-to-text and text-to-speech helpers.
 - `app.js`: connects the existing UI to the agent modules.
 
+## Local Desktop Helper
+
+To let Codex handle project logistics like `git push`, start the local helper outside the Codex sandbox:
+
+```bash
+cd "/Users/giliyoffe/Documents/AI Business automation costume agent/agents/profit-delta-client-agent"
+node helper/local-helper.mjs
+```
+
+Keep that terminal open. Codex can then call:
+
+```text
+http://127.0.0.1:17874/git/push
+```
+
+The helper is local-only and currently supports project status and push.
+
 ## File Map
 
 - `agent-instructions.md`: the dedicated agent behavior.
