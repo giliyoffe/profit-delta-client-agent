@@ -4,3 +4,4 @@ package-lock.json
 .wrangler/
 .DS_Store
 .helper-token
+.helper-requests/

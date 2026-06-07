@@ -10,6 +10,7 @@ const projectDir = path.resolve(helperDir, "..");
 const host = "127.0.0.1";
 const port = Number(process.env.PD_HELPER_PORT || 17874);
 const tokenPath = path.join(projectDir, ".helper-token");
+const requestDir = path.join(projectDir, ".helper-requests");
 
 function getToken() {
   if (process.env.PD_HELPER_TOKEN) return process.env.PD_HELPER_TOKEN;
@@ -32,6 +33,77 @@ function runGit(args) {
       });
     });
   });
+}
+
+function ensureRequestDir() {
+  fs.mkdirSync(requestDir, { recursive: true });
+}
+
+function writeJson(filePath, body) {
+  fs.writeFileSync(filePath, `${JSON.stringify(body, null, 2)}\n`);
+}
+
+async function runAction(action) {
+  if (action === "git-status") {
+    return runGit(["status", "-sb"]);
+  }
+
+  if (action === "git-push") {
+    const before = await runGit(["status", "-sb"]);
+    const push = await runGit(["push"]);
+    const after = await runGit(["status", "-sb"]);
+    return { ok: push.ok, before, push, after };
+  }
+
+  return { ok: false, error: `Unsupported action: ${action}` };
+}
+
+async function processRequestFile(fileName) {
+  const requestPath = path.join(requestDir, fileName);
+  const processingPath = requestPath.replace(/\.json$/, ".processing.json");
+  const donePath = requestPath.replace(/\.json$/, ".done.json");
+  const failedPath = requestPath.replace(/\.json$/, ".failed.json");
+
+  try {
+    fs.renameSync(requestPath, processingPath);
+  } catch {
+    return;
+  }
+
+  try {
+    const request = JSON.parse(fs.readFileSync(processingPath, "utf8"));
+    const result = await runAction(request.action);
+    writeJson(result.ok ? donePath : failedPath, {
+      id: request.id || fileName.replace(/\.json$/, ""),
+      action: request.action,
+      createdAt: request.createdAt || null,
+      completedAt: new Date().toISOString(),
+      result,
+    });
+    fs.unlinkSync(processingPath);
+  } catch (error) {
+    writeJson(failedPath, {
+      id: fileName.replace(/\.json$/, ""),
+      completedAt: new Date().toISOString(),
+      result: { ok: false, error: error.message },
+    });
+    try {
+      fs.unlinkSync(processingPath);
+    } catch {
+      // Ignore cleanup race.
+    }
+  }
+}
+
+function startRequestWatcher() {
+  ensureRequestDir();
+  setInterval(() => {
+    const files = fs
+      .readdirSync(requestDir)
+      .filter((file) => file.endsWith(".json") && !file.endsWith(".done.json") && !file.endsWith(".failed.json") && !file.endsWith(".processing.json"))
+      .sort();
+    files.forEach((file) => processRequestFile(file));
+  }, 1000);
 }
 
 function json(res, status, body) {
@@ -69,16 +141,14 @@ async function handle(req, res) {
   }
 
   if (url.pathname === "/git/status" && req.method === "GET") {
-    const result = await runGit(["status", "-sb"]);
+    const result = await runAction("git-status");
     json(res, result.ok ? 200 : 500, result);
     return;
   }
 
   if (url.pathname === "/git/push" && req.method === "POST") {
-    const before = await runGit(["status", "-sb"]);
-    const push = await runGit(["push"]);
-    const after = await runGit(["status", "-sb"]);
-    json(res, push.ok ? 200 : 500, { ok: push.ok, before, push, after });
+    const result = await runAction("git-push");
+    json(res, result.ok ? 200 : 500, result);
     return;
   }
 
@@ -109,7 +179,9 @@ server.on("error", (error) => {
 });
 
 server.listen(port, host, () => {
+  startRequestWatcher();
   console.log(`Profit Delta helper running at http://${host}:${port}`);
   console.log(`Project: ${projectDir}`);
   console.log(`Token file: ${tokenPath}`);
+  console.log(`Request queue: ${requestDir}`);
 });
