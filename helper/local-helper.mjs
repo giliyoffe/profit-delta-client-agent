@@ -2,11 +2,24 @@ import http from "node:http";
 import { execFile } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import fs from "node:fs";
+import crypto from "node:crypto";
 
 const helperDir = path.dirname(fileURLToPath(import.meta.url));
 const projectDir = path.resolve(helperDir, "..");
 const host = "127.0.0.1";
 const port = Number(process.env.PD_HELPER_PORT || 17874);
+const tokenPath = path.join(projectDir, ".helper-token");
+
+function getToken() {
+  if (process.env.PD_HELPER_TOKEN) return process.env.PD_HELPER_TOKEN;
+  if (fs.existsSync(tokenPath)) return fs.readFileSync(tokenPath, "utf8").trim();
+  const token = crypto.randomBytes(24).toString("hex");
+  fs.writeFileSync(tokenPath, `${token}\n`, { mode: 0o600 });
+  return token;
+}
+
+const helperToken = getToken();
 
 function runGit(args) {
   return new Promise((resolve) => {
@@ -24,11 +37,16 @@ function runGit(args) {
 function json(res, status, body) {
   res.writeHead(status, {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "http://localhost:4174",
+    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type,X-Profit-Delta-Helper-Token",
   });
   res.end(JSON.stringify(body, null, 2));
+}
+
+function isAuthorized(req) {
+  if (req.url?.startsWith("/health")) return true;
+  return req.headers["x-profit-delta-helper-token"] === helperToken;
 }
 
 async function handle(req, res) {
@@ -41,7 +59,12 @@ async function handle(req, res) {
   const url = new URL(req.url, `http://${host}:${port}`);
 
   if (url.pathname === "/health" && req.method === "GET") {
-    json(res, 200, { ok: true, projectDir });
+    json(res, 200, { ok: true, projectDir, tokenRequired: true });
+    return;
+  }
+
+  if (!isAuthorized(req)) {
+    json(res, 401, { ok: false, error: "Missing or invalid helper token" });
     return;
   }
 
@@ -88,4 +111,5 @@ server.on("error", (error) => {
 server.listen(port, host, () => {
   console.log(`Profit Delta helper running at http://${host}:${port}`);
   console.log(`Project: ${projectDir}`);
+  console.log(`Token file: ${tokenPath}`);
 });

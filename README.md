@@ -71,7 +71,7 @@ Keep that terminal open. Codex can then call:
 http://127.0.0.1:17874/git/push
 ```
 
-The helper is local-only and currently supports project status and push.
+The helper is local-only and currently supports project status and push. It creates a `.helper-token` file that is ignored by Git and required for action requests.
 
 ## File Map
 
