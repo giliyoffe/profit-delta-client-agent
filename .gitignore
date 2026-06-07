@@ -6,3 +6,8 @@ package-lock.json
 .helper-token
 .helper-requests/
 .helper-results/
+
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
