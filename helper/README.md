@@ -57,8 +57,8 @@ Example request:
 The helper renames it while processing, then writes either:
 
 ```text
-*.done.json
-*.failed.json
+.helper-results/*.done.json
+.helper-results/*.failed.json
 ```
 
 ## Safety

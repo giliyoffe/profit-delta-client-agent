@@ -11,6 +11,7 @@ const host = "127.0.0.1";
 const port = Number(process.env.PD_HELPER_PORT || 17874);
 const tokenPath = path.join(projectDir, ".helper-token");
 const requestDir = path.join(projectDir, ".helper-requests");
+const resultDir = path.join(projectDir, ".helper-results");
 
 function getToken() {
   if (process.env.PD_HELPER_TOKEN) return process.env.PD_HELPER_TOKEN;
@@ -37,6 +38,7 @@ function runGit(args) {
 
 function ensureRequestDir() {
   fs.mkdirSync(requestDir, { recursive: true });
+  fs.mkdirSync(resultDir, { recursive: true });
 }
 
 function writeJson(filePath, body) {
@@ -61,8 +63,9 @@ async function runAction(action) {
 async function processRequestFile(fileName) {
   const requestPath = path.join(requestDir, fileName);
   const processingPath = requestPath.replace(/\.json$/, ".processing.json");
-  const donePath = requestPath.replace(/\.json$/, ".done.json");
-  const failedPath = requestPath.replace(/\.json$/, ".failed.json");
+  const resultBaseName = fileName.replace(/\.json$/, "");
+  const donePath = path.join(resultDir, `${resultBaseName}.done.json`);
+  const failedPath = path.join(resultDir, `${resultBaseName}.failed.json`);
 
   try {
     fs.renameSync(requestPath, processingPath);
@@ -184,4 +187,5 @@ server.listen(port, host, () => {
   console.log(`Project: ${projectDir}`);
   console.log(`Token file: ${tokenPath}`);
   console.log(`Request queue: ${requestDir}`);
+  console.log(`Result queue: ${resultDir}`);
 });

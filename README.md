@@ -73,7 +73,7 @@ http://127.0.0.1:17874/git/push
 
 The helper is local-only and currently supports project status and push. It creates a `.helper-token` file that is ignored by Git and required for action requests.
 
-If Codex cannot call localhost directly, it can write a request file to `.helper-requests/`; the helper will process it and write back a result.
+If Codex cannot call localhost directly, it can write a request file to `.helper-requests/`; the helper will process it and write back a result in `.helper-results/`.
 
 ## File Map
 
