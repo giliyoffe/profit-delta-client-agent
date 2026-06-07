@@ -35,6 +35,7 @@ const outputs = {
 const agentUI = {
   status: document.querySelector("#agentStatus"),
   voiceButton: document.querySelector("#voiceButton"),
+  voiceMeter: document.querySelector(".voice-meter"),
   transcript: document.querySelector("#voiceTranscript"),
   response: document.querySelector("#agentResponse"),
   memory: document.querySelector("#memoryContext"),
@@ -53,6 +54,14 @@ const storageKey = "profit-delta-client-agent-v1";
 let tracker = [];
 let isListening = false;
 let pendingInstallPrompt = null;
+let pendingSpeech = "";
+let awaitingFinishConfirmation = false;
+let silenceTimer = null;
+let restartAfterSpeech = false;
+let resumeAfterAgentReply = false;
+let audioStream = null;
+let audioContext = null;
+let audioAnimationFrame = null;
 
 const starterSummary = `Client Snapshot
 
@@ -168,6 +177,91 @@ function renderChatMessage(role, message) {
   item.innerHTML = `<span>${role === "user" ? "You" : "Agent"}</span><p>${escapeHtml(message).replaceAll("\n", "<br>")}</p>`;
   agentUI.response.appendChild(item);
   agentUI.response.scrollTop = agentUI.response.scrollHeight;
+}
+
+function updateTranscript(interimText = "") {
+  agentUI.transcript.value = [pendingSpeech, interimText].filter(Boolean).join(" ").trim();
+}
+
+function isPositiveFinishAnswer(text) {
+  return /\b(yes|yeah|yep|that'?s all|done|send|send it|finished|finish)\b/i.test(text);
+}
+
+function isNegativeFinishAnswer(text) {
+  return /\b(no|not yet|wait|one more|more|continue|keep going|hold on)\b/i.test(text);
+}
+
+function clearSilenceTimer() {
+  window.clearTimeout(silenceTimer);
+  silenceTimer = null;
+}
+
+function scheduleFinishCheck() {
+  clearSilenceTimer();
+  silenceTimer = window.setTimeout(promptForFinishConfirmation, 2800);
+}
+
+function safeRecognizerStart() {
+  if (!recognizer || !isListening) return;
+  try {
+    recognizer.start();
+  } catch {
+    // The browser can throw if recognition is already active.
+  }
+}
+
+function promptForFinishConfirmation() {
+  if (!pendingSpeech.trim() || awaitingFinishConfirmation || !isListening) return;
+  awaitingFinishConfirmation = true;
+  setAgentStatus("Checking");
+  renderChatMessage("agent", "Was that all, or do you want to add more?");
+  restartAfterSpeech = true;
+  stopVoiceMeter();
+  try {
+    recognizer?.stop();
+  } catch {
+    // Ignore stop races from browser speech recognition.
+  }
+  const didSpeak = speakText("Was that all, or do you want to add more?", {
+    onEnd: () => {
+      if (restartAfterSpeech && isListening) {
+        restartAfterSpeech = false;
+        setAgentStatus("Listening");
+        startVoiceMeter();
+        window.setTimeout(safeRecognizerStart, 350);
+      }
+    },
+  });
+  if (!didSpeak && restartAfterSpeech && isListening) {
+    restartAfterSpeech = false;
+    setAgentStatus("Listening");
+    startVoiceMeter();
+    window.setTimeout(safeRecognizerStart, 350);
+  }
+}
+
+function finishPendingSpeech() {
+  const message = pendingSpeech.trim();
+  pendingSpeech = "";
+  awaitingFinishConfirmation = false;
+  resumeAfterAgentReply = isListening;
+  clearSilenceTimer();
+  updateTranscript();
+  try {
+    recognizer?.stop();
+  } catch {
+    // Ignore browser stop races.
+  }
+  stopVoiceMeter();
+  if (message) handleAgentMessage(message);
+}
+
+function continuePendingSpeech() {
+  awaitingFinishConfirmation = false;
+  clearSilenceTimer();
+  setAgentStatus("Listening");
+  renderChatMessage("agent", "Okay, keep going.");
+  updateTranscript();
 }
 
 function renderMemoryContext(context = getCurrentContext()) {
@@ -433,8 +527,21 @@ async function handleAgentMessage(message) {
   agentUI.transcript.value = "";
   saveState();
   setAgentStatus("Speaking");
-  speakText(result.reply);
-  window.setTimeout(() => setAgentStatus("Idle"), 1200);
+  const didSpeak = speakText(result.reply, {
+    onEnd: () => {
+      if (resumeAfterAgentReply && isListening) {
+        resumeAfterAgentReply = false;
+        setAgentStatus("Listening");
+        startVoiceMeter();
+        window.setTimeout(safeRecognizerStart, 350);
+        return;
+      }
+      setAgentStatus("Idle");
+    },
+  });
+  if (!didSpeak) {
+    setAgentStatus("Idle");
+  }
 }
 
 let recognizer = null;
@@ -444,6 +551,7 @@ function setListeningState(nextState) {
   agentUI.voiceButton.textContent = nextState ? "Stop Listening" : "Start Listening";
   agentUI.voiceButton.setAttribute("aria-pressed", String(nextState));
   agentUI.voiceButton.classList.toggle("danger", nextState);
+  agentUI.voiceMeter.classList.toggle("active", nextState);
 }
 
 function setupVoice() {
@@ -452,14 +560,35 @@ function setupVoice() {
       setListeningState(true);
       setAgentStatus("Listening");
     },
-    onResult: (transcript) => {
-      agentUI.transcript.value = transcript;
-      setListeningState(false);
-      handleAgentMessage(transcript);
+    onResult: ({ finalTranscript, interimTranscript }) => {
+      if (finalTranscript && awaitingFinishConfirmation) {
+        if (isPositiveFinishAnswer(finalTranscript)) {
+          finishPendingSpeech();
+          return;
+        }
+        if (isNegativeFinishAnswer(finalTranscript)) {
+          continuePendingSpeech();
+          return;
+        }
+        pendingSpeech = `${pendingSpeech} ${finalTranscript}`.trim();
+        awaitingFinishConfirmation = false;
+        updateTranscript();
+        scheduleFinishCheck();
+        return;
+      }
+
+      if (finalTranscript) {
+        pendingSpeech = `${pendingSpeech} ${finalTranscript}`.trim();
+        scheduleFinishCheck();
+      }
+      updateTranscript(interimTranscript);
     },
     onEnd: () => {
-      setListeningState(false);
-      if (agentUI.status.textContent === "Listening") setAgentStatus("Idle");
+      if (restartAfterSpeech) return;
+      if (isListening && !awaitingFinishConfirmation) {
+        window.setTimeout(safeRecognizerStart, 350);
+      }
+      if (agentUI.status.textContent === "Listening" && !isListening) setAgentStatus("Idle");
     },
     onError: (error) => {
       setListeningState(false);
@@ -475,17 +604,68 @@ function setupVoice() {
   }
 }
 
+async function startVoiceMeter() {
+  if (audioStream || !navigator.mediaDevices?.getUserMedia) return;
+  try {
+    audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioContext = new AudioContext();
+    const source = audioContext.createMediaStreamSource(audioStream);
+    const analyser = context.createAnalyser();
+    analyser.fftSize = 256;
+    source.connect(analyser);
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    const bars = Array.from(agentUI.voiceMeter.querySelectorAll("span"));
+
+    function tick() {
+      analyser.getByteFrequencyData(data);
+      bars.forEach((bar, index) => {
+        const bucket = data[index * 4] || 0;
+        const height = Math.max(4, Math.round((bucket / 255) * 30));
+        bar.style.height = `${height}px`;
+      });
+      audioAnimationFrame = requestAnimationFrame(tick);
+    }
+    tick();
+  } catch {
+    showToast("Voice meter unavailable");
+  }
+}
+
+function stopVoiceMeter() {
+  cancelAnimationFrame(audioAnimationFrame);
+  audioAnimationFrame = null;
+  if (audioStream) {
+    audioStream.getTracks().forEach((track) => track.stop());
+    audioStream = null;
+  }
+  if (audioContext) {
+    audioContext.close();
+    audioContext = null;
+  }
+  agentUI.voiceMeter.querySelectorAll("span").forEach((bar) => {
+    bar.style.height = "4px";
+  });
+}
+
 function toggleListening() {
   if (!recognizer) return;
   if (isListening) {
     recognizer.stop();
     stopSpeaking();
     setListeningState(false);
+    stopVoiceMeter();
+    clearSilenceTimer();
+    awaitingFinishConfirmation = false;
+    resumeAfterAgentReply = false;
     setAgentStatus("Idle");
     return;
   }
   stopSpeaking();
+  pendingSpeech = "";
+  awaitingFinishConfirmation = false;
+  updateTranscript();
   try {
+    startVoiceMeter();
     recognizer.start();
   } catch {
     setListeningState(false);
@@ -553,7 +733,7 @@ agentUI.speakLast.addEventListener("click", () => speakText(agentUI.response.tex
 agentUI.clearMemory.addEventListener("click", () => {
   clearMemory();
   renderMemoryContext();
-  showToast("Memory cleared");
+  showToast("Saved memory forgotten");
 });
 installUI.button.addEventListener("click", installApp);
 

@@ -73,7 +73,17 @@
             <button id="speakLastResponse" class="secondary" type="button">Speak Reply</button>
             <button id="clearAgentMemory" class="ghost" type="button">Forget Saved Memory</button>
           </div>
-          <p class="mic-note">Mic is off unless the status says Listening. Press the button again to stop.</p>
+          <div class="voice-meter" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <p class="mic-note">Mic is off unless the status says Listening. Pause naturally; the agent will ask before sending.</p>
           <label>
             Transcript
             <textarea id="voiceTranscript" rows="3" placeholder="Use the mic, or type a message here as fallback."></textarea>

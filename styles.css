@@ -243,6 +243,33 @@ h2 {
   font-size: 13px;
 }
 
+.voice-meter {
+  height: 36px;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  align-items: center;
+  gap: 5px;
+  margin: 0 0 14px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbf9fd;
+}
+
+.voice-meter span {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--rose), var(--purple));
+  opacity: 0.34;
+  transform: scaleY(1);
+  transform-origin: center;
+  transition: height 90ms ease, opacity 90ms ease;
+}
+
+.voice-meter.active span {
+  opacity: 0.78;
+}
+
 .status-pill.listening {
   background: rgba(191, 44, 118, 0.14);
   color: var(--coral);

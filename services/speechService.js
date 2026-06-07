@@ -4,16 +4,27 @@ export function createSpeechRecognizer({ onStart, onResult, onEnd, onError }) {
 
   const recognition = new Recognition();
   recognition.lang = "en-US";
-  recognition.interimResults = false;
-  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.continuous = true;
 
   recognition.onstart = () => onStart?.();
   recognition.onresult = (event) => {
-    const transcript = Array.from(event.results)
-      .map((result) => result[0]?.transcript || "")
-      .join(" ")
-      .trim();
-    onResult?.(transcript);
+    let finalTranscript = "";
+    let interimTranscript = "";
+
+    for (let index = event.resultIndex; index < event.results.length; index += 1) {
+      const text = event.results[index][0]?.transcript || "";
+      if (event.results[index].isFinal) {
+        finalTranscript += text;
+      } else {
+        interimTranscript += text;
+      }
+    }
+
+    onResult?.({
+      finalTranscript: finalTranscript.trim(),
+      interimTranscript: interimTranscript.trim(),
+    });
   };
   recognition.onerror = (event) => onError?.(event.error || "Speech recognition error");
   recognition.onend = () => onEnd?.();
@@ -21,12 +32,13 @@ export function createSpeechRecognizer({ onStart, onResult, onEnd, onError }) {
   return recognition;
 }
 
-export function speakText(text) {
+export function speakText(text, options = {}) {
   if (!("speechSynthesis" in window) || !text) return false;
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.rate = 0.95;
   utterance.pitch = 1;
+  utterance.onend = () => options.onEnd?.();
   window.speechSynthesis.speak(utterance);
   return true;
 }
